@@ -18,6 +18,11 @@
     <packaging>pom</packaging>
     <name>ph-shoes-search-services</name>
 
+    <modules>
+        <module>ph-shoes-search-service-core</module>
+        <module>ph-shoes-text-search-service-web</module>
+    </modules>
+
     <properties>
 		<java.version>21</java.version>
 		<aws.sdk.version>2.33.1</aws.sdk.version>
@@ -102,6 +107,14 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<!-- Prevent boot:run from trying to execute on the aggregator (packaging=pom) -->
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
@@ -123,12 +136,6 @@
 	</build>
 
 	<repositories>
-		<repository>
-			<id>github-nimbly-notification</id>
-			<url>https://maven.pkg.github.com/nimbly-dev/ph-shoes-notification-service</url>
-			<releases><enabled>true</enabled></releases>
-			<snapshots><enabled>true</enabled></snapshots>
-		</repository>
 		<repository>
 			<id>github-nimbly-commons</id>
 			<url>https://maven.pkg.github.com/nimbly-dev/ph-shoes-services-common</url>

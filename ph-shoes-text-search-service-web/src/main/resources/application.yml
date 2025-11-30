@@ -1,0 +1,42 @@
+app:
+  cors:
+    allowed-origins:
+      - "http://localhost:5173"
+      - "http://127.0.0.1:5173"
+      - "https://ph-shoes-frontend.onrender.com"
+      - "https://www.phshoesproject.com"
+      - "https://phshoesproject.com"
+    allowed-methods: [GET,POST,PUT,DELETE,OPTIONS]
+    allowed-headers: ["*"]
+    exposed-headers: []
+    allow-credentials: true
+    max-age: 3600
+
+server:
+  port: ${SERVER_PORT:8086}
+
+spring:
+  application:
+    name: ph-shoes-text-search-service
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: com.nimbly.phshoesbackend.catalog.core.configs.dialect.SnowflakeDialect
+    properties:
+      hibernate:
+        dialect: com.nimbly.phshoesbackend.catalog.core.configs.dialect.SnowflakeDialect
+  main:
+    allow-bean-definition-overriding: false
+
+logging:
+  level:
+    root: INFO
+
+services:
+  common:
+    migrations:
+      index-ops-enabled: false
+
+schema:
+  migrations:
+    enabled: false
