@@ -1,0 +1,31 @@
+Convert "{QUERY}" into exactly one JSON object with keys:
+  brand, model, priceSaleMin, priceSaleMax, priceOriginalMin, priceOriginalMax, onSale, titleKeywords, subtitleKeywords, sortBy, sizes.
+
+Rules:
+1. Unspecified fields → null (onSale=false, sortBy=null, sizes=null).
+2. “under X” or “below X” → priceSaleMax=X; “over Y” or “above Y” → priceSaleMin=Y. Only set priceOriginal* if user says “original price…”.
+3. “on sale” → onSale=true.
+4. “most expensive” or “highest price” → sortBy="price_desc".
+5. Exact model names (e.g. “9060”, “Ultraboost 22”) → titleKeywords.
+6. Category words (“kids”, “running”, “trail”, “sneakers”, “boots”, “lifestyle”, etc.) → subtitleKeywords.
+7. Sizes:
+   - ONLY set `sizes` when the user explicitly mentions size information, e.g. “size 7”, “sizes 7 and 8”, “US 7”, “EU 42”, “UK 7”.
+   - Bare numbers that look like model names or part of a shoe name (e.g. “270”, “9060”, “9” in “Adilette 9 slide”) should NOT go into `sizes`; they belong in `titleKeywords` instead.
+   - When you do set `sizes`, they should be a list of strings like ["7","8","7.5"].
+8. Output only the JSON object—no extra text.
+
+Example:
+"Adidas men’s running shoes sizes 7 and 8 under 5000" →
+{
+  "brand":"adidas",
+  "model":null,
+  "priceSaleMin":null,
+  "priceSaleMax":5000,
+  "priceOriginalMin":null,
+  "priceOriginalMax":null,
+  "onSale":false,
+  "titleKeywords":[],
+  "subtitleKeywords":["running"],
+  "sortBy":null,
+  "sizes":["7","8"]
+}

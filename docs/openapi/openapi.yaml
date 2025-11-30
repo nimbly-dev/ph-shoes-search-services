@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info:
+  title: PH Shoes — Text Search API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+
+tags:
+  - name: TextSearch
+    description: AI-powered text search over the PH Shoes catalog.
+
+paths:
+  /search/fact-product-shoes:
+    get:
+      tags: [TextSearch]
+      summary: AI-powered natural language search over the product catalog.
+      operationId: searchFactProductShoesByText
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Natural language query describing what shoes to find.
+        - in: query
+          name: useVector
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: >
+            When true, use vector similarity as a fallback and for ranking
+            when filters alone return few or no matches.
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Zero-based page index.
+        - in: query
+          name: size
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 15
+          description: Page size for search results.
+        - in: query
+          name: sort
+          required: false
+          schema:
+            type: string
+          description: >
+            Optional sort definition in the form `field,(asc|desc)`.
+            Ignored when AI decides a price sort (e.g. "cheapest").
+      responses:
+        '200':
+          description: AI-backed search results and interpreted filters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TextSearchResponse'
+        '400':
+          description: Invalid query or unsupported characters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    TextSearchResponse:
+      $ref: 'components/schemas/SearchText.yaml#/components/schemas/TextSearchResponse'
+    TextSearchFilterCriteriaResponse:
+      $ref: 'components/schemas/SearchText.yaml#/components/schemas/TextSearchFilterCriteriaResponse'
+    TextSearchResultPageResponse:
+      $ref: 'components/schemas/SearchText.yaml#/components/schemas/TextSearchResultPageResponse'
+    TextSearchResultResponse:
+      $ref: 'components/schemas/SearchText.yaml#/components/schemas/TextSearchResultResponse'
+    ErrorResponse:
+      $ref: 'components/schemas/SearchText.yaml#/components/schemas/ErrorResponse'
+

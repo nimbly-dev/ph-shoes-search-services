@@ -1,0 +1,154 @@
+components:
+  schemas:
+    TextSearchResponse:
+      type: object
+      description: Combined view of interpreted filters and paged search results.
+      properties:
+        filter:
+          $ref: '#/components/schemas/TextSearchFilterCriteriaResponse'
+        results:
+          $ref: '#/components/schemas/TextSearchResultPageResponse'
+      required: [filter, results]
+
+    TextSearchFilterCriteriaResponse:
+      type: object
+      description: Normalized filters inferred from the natural language query.
+      properties:
+        brands:
+          type: array
+          items: { type: string }
+          description: Canonicalized brand slugs (e.g., "newbalance").
+        model:
+          type: string
+          nullable: true
+          description: Parsed model or exact phrase when present.
+        priceSaleMin:
+          type: number
+          format: double
+          nullable: true
+        priceSaleMax:
+          type: number
+          format: double
+          nullable: true
+        priceOriginalMin:
+          type: number
+          format: double
+          nullable: true
+        priceOriginalMax:
+          type: number
+          format: double
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+          description: Canonical gender (male, female, kids, unisex).
+        onSale:
+          type: boolean
+          nullable: true
+          description: When true, restricts to products where sale price is below original.
+        titleKeywords:
+          type: array
+          items: { type: string }
+          nullable: true
+          description: Keywords applied to product title.
+        subtitleKeywords:
+          type: array
+          items: { type: string }
+          nullable: true
+          description: Keywords applied to product subtitle or category text.
+        sortBy:
+          type: string
+          nullable: true
+          description: AI-selected sort shortcut.
+          enum: [price_asc, price_desc]
+        sizes:
+          type: array
+          items: { type: string }
+          nullable: true
+          description: >
+            US shoe sizes inferred from the query, represented as normalized
+            numeric strings (e.g. "7", "7.5"). Units like "US"/"EU"/"UK" and
+            other characters are stripped during normalization.
+      required: []
+
+    TextSearchResultPageResponse:
+      type: object
+      description: Paged list of text search results.
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TextSearchResultResponse'
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+        empty:
+          type: boolean
+      required: [content, page, size, totalElements, totalPages, first, last, empty]
+
+    TextSearchResultResponse:
+      type: object
+      description: Minimal view of a product returned from text search.
+      properties:
+        id:
+          type: string
+          description: Public product identifier.
+        brand:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+          nullable: true
+        url:
+          type: string
+          format: uri
+        image:
+          type: string
+          format: uri
+          nullable: true
+        priceSale:
+          type: number
+          format: double
+          nullable: true
+        priceOriginal:
+          type: number
+          format: double
+          nullable: true
+        gender:
+          type: string
+          nullable: true
+        ageGroup:
+          type: string
+          nullable: true
+        sizes:
+          type: array
+          items: { type: string }
+          nullable: true
+          description: >
+            Available US shoe sizes for this product, derived from internal
+            catalog data and exposed as normalized numeric strings
+            (e.g. "7", "7.5"). Does not expose the raw extra JSON.
+      required: [id, brand, title, url]
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        details:
+          type: string
+      required: [message]
+
