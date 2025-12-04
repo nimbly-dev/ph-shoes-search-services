@@ -2,6 +2,7 @@ package com.nimbly.phshoesbackend.search.core.service.impl;
 
 import com.nimbly.phshoesbackend.search.core.model.AISearchFilterCriteria;
 import com.nimbly.phshoesbackend.search.core.service.PreFilterExtractor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

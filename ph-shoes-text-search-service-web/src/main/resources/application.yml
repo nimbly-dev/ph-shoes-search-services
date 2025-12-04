@@ -40,3 +40,28 @@ services:
 schema:
   migrations:
     enabled: false
+
+phshoes:
+  status:
+    enabled: true
+    path: /system/status
+    service-id: text-search
+    display-name: Text Search Service
+    environment: ${APP_ENV:local}
+    version: ${APP_VERSION:local}
+    description: Handles text search queries across catalog data.
+  api:
+    rate-limit:
+      enabled: true
+      default-window: 24h
+      global:
+        enabled: true
+        limit: 5000
+      per-ip:
+        enabled: true
+        limit: 300
+  security:
+    email:
+      enabled: false
+    jwt:
+      enabled: false
