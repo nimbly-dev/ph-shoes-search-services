@@ -29,6 +29,10 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
@@ -66,15 +70,15 @@
 
         <!-- Reuse catalog core domain + JPA repositories -->
         <dependency>
-            <groupId>com.nimbly</groupId>
+            <groupId>com.nimbly.phshoesbackend.catalog</groupId>
             <artifactId>ph-shoes-catalog-service-core</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
-        <!-- Common service utilities (rate limiting, health, etc.) -->
+        <!-- Common service utilities (status, rate limiting, etc.) -->
         <dependency>
-            <groupId>com.nimbly.phshoesbackend.commons</groupId>
-            <artifactId>ph-shoes-services-common-core</artifactId>
+            <groupId>com.nimbly.phshoesbackend.starters</groupId>
+            <artifactId>ph-shoes-starter-services-common-core</artifactId>
         </dependency>
 
         <!-- OpenAPI generated DTOs use nullable + swagger annotations -->

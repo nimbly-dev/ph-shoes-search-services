@@ -41,9 +41,15 @@
             <artifactId>ph-shoes-search-service-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <!-- Shared service starters -->
         <dependency>
-            <groupId>com.nimbly.phshoesbackend.commons</groupId>
-            <artifactId>ph-shoes-services-common-core</artifactId>
+            <groupId>com.nimbly.phshoesbackend.starters</groupId>
+            <artifactId>ph-shoes-starter-services-common-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbly.phshoesbackend.starters</groupId>
+            <artifactId>ph-shoes-starter-services-common-web</artifactId>
         </dependency>
 
         <dependency>
