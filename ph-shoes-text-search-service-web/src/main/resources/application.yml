@@ -44,7 +44,7 @@ schema:
 phshoes:
   status:
     enabled: true
-    path: /system/status
+    path: /api/v1/system/status
     service-id: text-search
     display-name: Text Search Service
     environment: ${APP_ENV:local}
