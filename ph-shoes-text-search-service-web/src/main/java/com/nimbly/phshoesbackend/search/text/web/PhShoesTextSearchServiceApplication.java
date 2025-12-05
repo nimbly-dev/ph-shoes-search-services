@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = {
         "com.nimbly.phshoesbackend.search.core",
-        "com.nimbly.phshoesbackend.search.text.web"
+        "com.nimbly.phshoesbackend.search.text.web",
+        "com.nimbly.phshoesbackend.commons.core",
+        "com.nimbly.phshoesbackend.commons.web"
 })
 @EntityScan({
         "com.nimbly.phshoesbackend.catalog.core.model",
