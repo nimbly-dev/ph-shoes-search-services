@@ -21,6 +21,11 @@ RUN printf '%s\n' \
     "      <username>${GH_ACTOR}</username>" \
     "      <password>${GH_PACKAGES_TOKEN}</password>" \
     '    </server>' \
+    '    <server>' \
+    '      <id>github-nimbly-starters</id>' \
+    "      <username>${GH_ACTOR}</username>" \
+    "      <password>${GH_PACKAGES_TOKEN}</password>" \
+    '    </server>' \
     '  </servers>' \
     '</settings>' \
     > ${MAVEN_SETTINGS_PATH}
