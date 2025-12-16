@@ -11,8 +11,16 @@ ENV SPRING_PROFILES_ACTIVE=${MAVEN_ACTIVE_PROFILES}
 RUN printf '%s\n' \
     '<settings>' \
     '  <servers>' \
-    '    <server><id>github-nimbly-commons</id><username>'"${GH_ACTOR}"'</username><password>'"${GH_PACKAGES_TOKEN}"'</password></server>' \
-    '    <server><id>github-nimbly-catalog</id><username>'"${GH_ACTOR}"'</username><password>'"${GH_PACKAGES_TOKEN}"'</password></server>' \
+    '    <server>' \
+    '      <id>github-nimbly-commons</id>' \
+    "      <username>${GH_ACTOR}</username>" \
+    "      <password>${GH_PACKAGES_TOKEN}</password>" \
+    '    </server>' \
+    '    <server>' \
+    '      <id>github-nimbly-catalog</id>' \
+    "      <username>${GH_ACTOR}</username>" \
+    "      <password>${GH_PACKAGES_TOKEN}</password>" \
+    '    </server>' \
     '  </servers>' \
     '</settings>' \
     > ${MAVEN_SETTINGS_PATH}
@@ -21,7 +29,7 @@ COPY pom.xml .
 COPY ph-shoes-search-service-core/pom.xml ph-shoes-search-service-core/pom.xml
 COPY ph-shoes-text-search-service-web/pom.xml ph-shoes-text-search-service-web/pom.xml
 COPY docs ./docs
-RUN --mount=type=cache,target=/root/.m2 mvn -s ${MAVEN_SETTINGS_PATH} -q -U -P${MAVEN_ACTIVE_PROFILES} -DskipTests dependency:go-offline
+RUN --mount=type=cache,target=/root/.m2 mvn -s ${MAVEN_SETTINGS_PATH} -q -e -U -P${MAVEN_ACTIVE_PROFILES} -DskipTests dependency:go-offline
 
 COPY ph-shoes-search-service-core ./ph-shoes-search-service-core
 COPY ph-shoes-text-search-service-web ./ph-shoes-text-search-service-web
@@ -33,7 +41,7 @@ FROM amazoncorretto:21-alpine AS runtime
 ENV APP_HOME=/app \
     JAVA_TOOL_OPTIONS="-XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=75" \
     SPRING_PROFILES_ACTIVE=prod \
-    PORT=8086
+    PORT=8080
 
 RUN addgroup -S spring && adduser -S spring -G spring
 RUN apk add --no-cache curl
