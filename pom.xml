@@ -134,4 +134,19 @@
         </plugins>
     </build>
 
+    <repositories>
+        <repository>
+            <id>github-nimbly-catalog</id>
+            <url>https://maven.pkg.github.com/nimbly-dev/ph-shoes-catalog-service</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <repository>
+            <id>github-nimbly-starters</id>
+            <url>https://maven.pkg.github.com/nimbly-dev/ph-shoes-starter-services</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+    </repositories>
+
 </project>
