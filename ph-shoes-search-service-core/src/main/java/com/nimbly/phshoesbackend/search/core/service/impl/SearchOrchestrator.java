@@ -1,7 +1,7 @@
 package com.nimbly.phshoesbackend.search.core.service.impl;
 
-import com.nimbly.phshoesbackend.catalog.core.model.FactProductShoes;
-import com.nimbly.phshoesbackend.catalog.core.repository.jpa.FactProductShoesSpecRepository;
+import com.nimbly.phshoesbackend.catalog.core.model.CatalogShoe;
+import com.nimbly.phshoesbackend.catalog.core.repository.jpa.CatalogShoeRepository;
 import com.nimbly.phshoesbackend.search.core.model.AISearchFilterCriteria;
 import com.nimbly.phshoesbackend.search.core.util.SpecificationBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -17,26 +17,25 @@ import org.springframework.util.StringUtils;
 @Component
 public class SearchOrchestrator {
 
-    private final FactProductShoesSpecRepository specRepo;
+    private final CatalogShoeRepository catalogShoeRepository;
     private final SpecificationBuilder specBuilder;
 
     public SearchOrchestrator(
-            FactProductShoesSpecRepository specRepo,
+            CatalogShoeRepository catalogShoeRepository,
             SpecificationBuilder specBuilder
     ) {
-        this.specRepo = specRepo;
+        this.catalogShoeRepository = catalogShoeRepository;
         this.specBuilder = specBuilder;
     }
 
-    public Page<FactProductShoes> search(
+    public Page<CatalogShoe> search(
             String naturalLanguageQuery,
             AISearchFilterCriteria criteria,
-            Pageable pageable,
-            boolean useVector
+            Pageable pageable
     ) {
-        Specification<FactProductShoes> baseSpec = specBuilder.build(criteria);
+        Specification<CatalogShoe> baseSpec = specBuilder.build(criteria);
 
-        Page<FactProductShoes> page;
+        Page<CatalogShoe> page;
 
         if (StringUtils.hasText(criteria.getSortBy())) {
             Sort priceSort = "price_asc".equals(criteria.getSortBy())
@@ -48,9 +47,9 @@ public class SearchOrchestrator {
                     pageable.getPageSize(),
                     priceSort
             );
-            page = specRepo.findAll(baseSpec, pricePageable);
+            page = catalogShoeRepository.findAll(baseSpec, pricePageable);
         } else {
-            page = specRepo.findAll(baseSpec, pageable);
+            page = catalogShoeRepository.findAll(baseSpec, pageable);
         }
 
         if (page.isEmpty()) {

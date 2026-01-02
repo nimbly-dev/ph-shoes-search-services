@@ -1,25 +1,21 @@
 app:
   cors:
-    allowed-origins:
-      - "http://localhost:5173"
-      - "http://127.0.0.1:5173"
-      - "https://www.phshoesproject.com"
-      - "https://phshoesproject.com"
-    allowed-methods: [GET,POST,PUT,DELETE,OPTIONS]
-    allowed-headers: ["*"]
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,https://www.phshoesproject.com,https://phshoesproject.com}
+    allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
+    allowed-headers: ${CORS_ALLOWED_HEADERS:*}
     exposed-headers: []
-    allow-credentials: true
-    max-age: 3600
+    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+    max-age: ${CORS_MAX_AGE:3600}
 
 server:
-  port: ${SERVER_PORT:8084}
+  port: ${PORT:8084}
 
 spring:
   application:
     name: ph-shoes-text-search-service
   datasource:
-    url: jdbc:snowflake://${SNOWFLAKE_ACCOUNT}.snowflakecomputing.com?warehouse=${SNOWFLAKE_WAREHOUSE}&db=${SNOWFLAKE_DATABASE}&schema=${SNOWFLAKE_SCHEMA}&role=${SNOWFLAKE_ROLE}&JDBC_QUERY_RESULT_FORMAT=JSON
-    driver-class-name: net.snowflake.client.jdbc.SnowflakeDriver
+    url: ${SPRING_DATASOURCE_URL:jdbc:snowflake://${SNOWFLAKE_ACCOUNT}.snowflakecomputing.com?warehouse=${SNOWFLAKE_WAREHOUSE}&db=${SNOWFLAKE_DATABASE}&schema=${SNOWFLAKE_SCHEMA}&role=${SNOWFLAKE_ROLE}&JDBC_QUERY_RESULT_FORMAT=JSON}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:net.snowflake.client.jdbc.SnowflakeDriver}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
@@ -34,7 +30,7 @@ spring:
 
 logging:
   level:
-    root: INFO
+    root: ${LOG_LEVEL_ROOT:INFO}
 
 services:
   common:
@@ -56,16 +52,16 @@ phshoes:
     description: Handles text search queries across catalog data.
   api:
     rate-limit:
-      enabled: true
-      default-window: 24h
+      enabled: ${PHSHOES_API_RATE_LIMIT_ENABLED:true}
+      default-window: ${PHSHOES_API_RATE_LIMIT_WINDOW:24h}
       global:
-        enabled: true
-        limit: 5000
+        enabled: ${PHSHOES_API_RATE_LIMIT_GLOBAL_ENABLED:true}
+        limit: ${PHSHOES_API_RATE_LIMIT_GLOBAL_LIMIT:5000}
       per-ip:
-        enabled: true
-        limit: 300
+        enabled: ${PHSHOES_API_RATE_LIMIT_PER_IP_ENABLED:true}
+        limit: ${PHSHOES_API_RATE_LIMIT_PER_IP_LIMIT:300}
   security:
     email:
-      enabled: false
+      enabled: ${PHSHOES_SECURITY_EMAIL_ENABLED:false}
     jwt:
-      enabled: false
+      enabled: ${PHSHOES_SECURITY_JWT_ENABLED:false}

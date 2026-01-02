@@ -5,5 +5,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface TextSearchService {
 
-    TextSearchResponse search(String nlQuery, boolean useVector, Pageable pageable);
+    TextSearchResponse search(String nlQuery, Pageable pageable);
 }

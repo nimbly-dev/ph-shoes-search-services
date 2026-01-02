@@ -52,8 +52,8 @@ public class OpenAiIntentParserServiceImpl implements OpenAiIntentParserService 
             List<String> cleanedBrands = parsed.getBrands().stream()
                     .filter(Objects::nonNull)
                     .map(String::trim)
-                    .filter(s -> !s.isBlank())
-                    .map(s -> s.toLowerCase().replaceAll("[^a-z0-9]+", ""))
+                    .filter(brandToken -> !brandToken.isBlank())
+                    .map(brandToken -> brandToken.toLowerCase().replaceAll("[^a-z0-9]+", ""))
                     .toList();
             parsed.setBrands(cleanedBrands);
         }

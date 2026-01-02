@@ -3,7 +3,7 @@ package com.nimbly.phshoesbackend.search.core.service.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.nimbly.phshoesbackend.catalog.core.model.FactProductShoes;
+import com.nimbly.phshoesbackend.catalog.core.model.CatalogShoe;
 import com.nimbly.phshoesbackend.search.core.model.AISearchFilterCriteria;
 import com.nimbly.phshoesbackend.search.core.service.FilterPipeline;
 import com.nimbly.phshoesbackend.search.core.service.TextSearchService;
@@ -37,10 +37,10 @@ public class TextSearchServiceImpl implements TextSearchService {
     }
 
     @Override
-    public TextSearchResponse search(String nlQuery, boolean useVector, Pageable pageable) {
+    public TextSearchResponse search(String nlQuery, Pageable pageable) {
         AISearchFilterCriteria criteria = pipeline.process(nlQuery);
 
-        Page<FactProductShoes> page = orchestrator.search(nlQuery, criteria, pageable, useVector);
+        Page<CatalogShoe> page = orchestrator.search(nlQuery, criteria, pageable);
 
         TextSearchResponseFilter filterDto = mapFilter(criteria);
         TextSearchResponseResults resultsDto = mapResults(page);
@@ -51,84 +51,81 @@ public class TextSearchServiceImpl implements TextSearchService {
         return response;
     }
 
-    private TextSearchResponseFilter mapFilter(AISearchFilterCriteria c) {
-        TextSearchResponseFilter dto = new TextSearchResponseFilter();
-        dto.setBrands(c.getBrands());
-        dto.setModel(c.getModel());
-        dto.setPriceSaleMin(c.getPriceSaleMin());
-        dto.setPriceSaleMax(c.getPriceSaleMax());
-        dto.setPriceOriginalMin(c.getPriceOriginalMin());
-        dto.setPriceOriginalMax(c.getPriceOriginalMax());
-        dto.setGender(c.getGender());
-        dto.setOnSale(c.getOnSale());
-        dto.setTitleKeywords(c.getTitleKeywords());
-        dto.setSubtitleKeywords(c.getSubtitleKeywords());
-        if (c.getSortBy() != null) {
-            try {
-                dto.setSortBy(TextSearchResponseFilter.SortByEnum.fromValue(c.getSortBy()));
-            } catch (IllegalArgumentException ignored) {
-                dto.setSortBy(null);
-            }
-        }
-        dto.setSizes(c.getSizes());
-        return dto;
+    private TextSearchResponseFilter mapFilter(AISearchFilterCriteria criteria) {
+        TextSearchResponseFilter filter = new TextSearchResponseFilter();
+        filter.setBrands(criteria.getBrands());
+        filter.setModel(criteria.getModel());
+        filter.setPriceSaleMin(criteria.getPriceSaleMin());
+        filter.setPriceSaleMax(criteria.getPriceSaleMax());
+        filter.setPriceOriginalMin(criteria.getPriceOriginalMin());
+        filter.setPriceOriginalMax(criteria.getPriceOriginalMax());
+        filter.setGender(criteria.getGender());
+        filter.setOnSale(criteria.getOnSale());
+        filter.setTitleKeywords(criteria.getTitleKeywords());
+        filter.setSubtitleKeywords(criteria.getSubtitleKeywords());
+        filter.setSortBy(parseSortBy(criteria.getSortBy()));
+        filter.setSizes(criteria.getSizes());
+        return filter;
     }
 
-    private TextSearchResponseResults mapResults(Page<FactProductShoes> page) {
-        TextSearchResponseResults dto = new TextSearchResponseResults();
+    private TextSearchResponseResults mapResults(Page<CatalogShoe> page) {
+        TextSearchResponseResults results = new TextSearchResponseResults();
+        List<TextSearchResponseResultsContentInner> content = page.getContent()
+                .stream()
+                .map(this::toResultItem)
+                .toList();
 
-        List<TextSearchResponseResultsContentInner> content = new ArrayList<>();
-        for (FactProductShoes shoe : page.getContent()) {
-            TextSearchResponseResultsContentInner r = new TextSearchResponseResultsContentInner();
-            r.setId(shoe.getKey().getId());
-            r.setBrand(shoe.getBrand());
-            r.setTitle(shoe.getTitle());
-            r.setSubtitle(shoe.getSubtitle());
-            r.setUrl(parseUri(shoe.getUrl()));
-            r.setImage(parseNullableUri(shoe.getImage()));
-            r.setPriceSale(shoe.getPriceSale());
-            r.setPriceOriginal(shoe.getPriceOriginal());
-            r.setGender(shoe.getGender());
-            r.setAgeGroup(shoe.getAgeGroup());
-            r.setSizes(extractSizes(shoe));
-            content.add(r);
-        }
+        results.setContent(content);
+        results.setPage(page.getNumber());
+        results.setSize(page.getSize());
+        results.setTotalElements(page.getTotalElements());
+        results.setTotalPages(page.getTotalPages());
+        results.setFirst(page.isFirst());
+        results.setLast(page.isLast());
+        results.setEmpty(page.isEmpty());
 
-        dto.setContent(content);
-        dto.setPage(page.getNumber());
-        dto.setSize(page.getSize());
-        dto.setTotalElements(page.getTotalElements());
-        dto.setTotalPages(page.getTotalPages());
-        dto.setFirst(page.isFirst());
-        dto.setLast(page.isLast());
-        dto.setEmpty(page.isEmpty());
-
-        return dto;
+        return results;
     }
 
-    private URI parseUri(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return URI.create("about:blank");
-        }
-        try {
-            return URI.create(raw);
-        } catch (IllegalArgumentException e) {
-            return URI.create("about:blank");
-        }
+    private TextSearchResponseResultsContentInner toResultItem(CatalogShoe shoe) {
+        TextSearchResponseResultsContentInner result = new TextSearchResponseResultsContentInner();
+        result.setId(shoe.getId());
+        result.setBrand(shoe.getBrand());
+        result.setTitle(shoe.getTitle());
+        result.setSubtitle(shoe.getSubtitle());
+        result.setUrl(parseUri(shoe.getUrl(), URI.create("about:blank")));
+        result.setImage(parseUri(shoe.getImage(), null));
+        result.setPriceSale(shoe.getPriceSale());
+        result.setPriceOriginal(shoe.getPriceOriginal());
+        result.setGender(shoe.getGender());
+        result.setAgeGroup(shoe.getAgeGroup());
+        result.setSizes(extractSizes(shoe));
+        return result;
     }
 
-    private URI parseNullableUri(String raw) {
-        if (raw == null || raw.isBlank()) {
+    private TextSearchResponseFilter.SortByEnum parseSortBy(String sortBy) {
+        if (sortBy == null) {
             return null;
         }
         try {
-            return URI.create(raw);
-        } catch (IllegalArgumentException e) {
+            return TextSearchResponseFilter.SortByEnum.fromValue(sortBy);
+        } catch (IllegalArgumentException ignored) {
             return null;
         }
     }
 
-    private List<String> extractSizes(FactProductShoes shoe) {
+    private URI parseUri(String raw, URI fallback) {
+        if (raw == null || raw.isBlank()) {
+            return fallback;
+        }
+        try {
+            return URI.create(raw);
+        } catch (IllegalArgumentException e) {
+            return fallback;
+        }
+    }
+
+    private List<String> extractSizes(CatalogShoe shoe) {
         String extra = shoe.getExtra();
         if (extra == null || extra.isBlank()) {
             return null;

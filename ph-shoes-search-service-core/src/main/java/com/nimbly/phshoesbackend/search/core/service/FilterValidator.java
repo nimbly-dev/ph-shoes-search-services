@@ -20,34 +20,41 @@ public class FilterValidator {
         this.preExtractor = preExtractor;
     }
 
-    public void validate(AISearchFilterCriteria c) {
-        sanitizeBrands(c);
+    public void validate(AISearchFilterCriteria criteria) {
+        sanitizeBrands(criteria);
 
-        if (c.getPriceSaleMin() != null && c.getPriceSaleMin() < 0 ||
-                c.getPriceSaleMax() != null && c.getPriceSaleMax() < 0) {
+        if (criteria.getPriceSaleMin() != null && criteria.getPriceSaleMin() < 0 ||
+                criteria.getPriceSaleMax() != null && criteria.getPriceSaleMax() < 0) {
             log.warn("Negative priceSale filter");
             throw new AiSearchException("Negative priceSale filter", null);
         }
-        if (c.getPriceSaleMin() != null && c.getPriceSaleMax() != null
-                && c.getPriceSaleMin() > c.getPriceSaleMax()) {
+        if (criteria.getPriceSaleMin() != null && criteria.getPriceSaleMax() != null
+                && criteria.getPriceSaleMin() > criteria.getPriceSaleMax()) {
             log.warn("priceSaleMin > priceSaleMax");
             throw new AiSearchException("priceSaleMin > priceSaleMax", null);
         }
-        if (c.getSortBy() != null &&
-                !Set.of("price_asc", "price_desc").contains(c.getSortBy())) {
-            log.warn("Invalid sortBy: {}", c.getSortBy());
-            throw new AiSearchException("Invalid sortBy: " + c.getSortBy(), null);
+        if (criteria.getSortBy() != null &&
+                !Set.of("price_asc", "price_desc").contains(criteria.getSortBy())) {
+            log.warn("Invalid sortBy: {}", criteria.getSortBy());
+            throw new AiSearchException("Invalid sortBy: " + criteria.getSortBy(), null);
         }
-        if (c.getGender() != null && !Set.of("male", "female", "unisex").contains(c.getGender())) {
-            log.warn("Invalid gender: {}", c.getGender());
-            throw new AiSearchException("Invalid gender: " + c.getGender(), null);
+        if (criteria.getGender() != null && !Set.of("male", "female", "kids", "unisex").contains(criteria.getGender())) {
+            log.warn("Invalid gender: {}", criteria.getGender());
+            throw new AiSearchException("Invalid gender: " + criteria.getGender(), null);
         }
-        if (c.getTitleKeywords() == null) c.setTitleKeywords(List.of());
-        if (c.getSubtitleKeywords() == null) c.setSubtitleKeywords(List.of());
+        if (criteria.getGender() != null) {
+            List<String> subtitleKeywords = new ArrayList<>(criteria.getSubtitleKeywords() == null
+                    ? List.of()
+                    : criteria.getSubtitleKeywords());
+            subtitleKeywords.add(criteria.getGender());
+            criteria.setSubtitleKeywords(subtitleKeywords);
+        }
+        if (criteria.getTitleKeywords() == null) criteria.setTitleKeywords(List.of());
+        if (criteria.getSubtitleKeywords() == null) criteria.setSubtitleKeywords(List.of());
     }
 
-    private void sanitizeBrands(AISearchFilterCriteria c) {
-        List<String> brands = c.getBrands();
+    private void sanitizeBrands(AISearchFilterCriteria criteria) {
+        List<String> brands = criteria.getBrands();
         if (brands == null || brands.isEmpty()) {
             return;
         }
@@ -68,17 +75,17 @@ public class FilterValidator {
             }
         }
 
-        c.setBrands(valid.isEmpty() ? null : valid);
+        criteria.setBrands(valid.isEmpty() ? null : valid);
 
         if (!demoted.isEmpty()) {
             log.info("Demoting unknown brands to keywords: {}", demoted);
-            List<String> title = new ArrayList<>(c.getTitleKeywords() == null ? List.of() : c.getTitleKeywords());
+            List<String> title = new ArrayList<>(criteria.getTitleKeywords() == null ? List.of() : criteria.getTitleKeywords());
             title.addAll(demoted.stream()
                     .map(String::trim)
                     .filter(StringUtils::hasText)
                     .map(String::toLowerCase)
                     .toList());
-            c.setTitleKeywords(title);
+            criteria.setTitleKeywords(title);
         }
     }
 }
