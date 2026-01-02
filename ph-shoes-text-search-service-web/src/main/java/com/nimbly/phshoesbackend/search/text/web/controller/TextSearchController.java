@@ -9,7 +9,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.HtmlUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -18,7 +17,6 @@ import java.util.regex.Pattern;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
 @RestController
-@RequestMapping("${api.base-path:/api/v1}")
 public class TextSearchController implements TextSearchApi {
 
     private static final Pattern SAFE_QUERY_PATTERN = Pattern.compile("^[\\p{Alnum}\\s.,?!\\-’']+$");
@@ -32,16 +30,14 @@ public class TextSearchController implements TextSearchApi {
     @Override
     public ResponseEntity<TextSearchResponse> searchFactProductShoesByText(
             String q,
-            Boolean useVector,
             Integer page,
             Integer size,
             String sort
     ) {
         String sanitized = sanitizeQuery(q);
         Pageable pageable = buildPageable(page, size, sort);
-        boolean vectorEnabled = useVector == null || useVector;
 
-        TextSearchResponse response = textSearchService.search(sanitized, vectorEnabled, pageable);
+        TextSearchResponse response = textSearchService.search(sanitized, pageable);
         return ResponseEntity.ok(response);
     }
 

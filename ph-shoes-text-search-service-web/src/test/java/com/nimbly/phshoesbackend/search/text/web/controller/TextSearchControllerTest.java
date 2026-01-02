@@ -22,7 +22,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -49,12 +48,11 @@ class TextSearchControllerTest {
     void searchFactProductShoesByText_returnsResults() throws Exception {
         // Arrange
         TextSearchResponse response = buildResponse();
-        when(textSearchService.search(any(), anyBoolean(), any(Pageable.class))).thenReturn(response);
+        when(textSearchService.search(any(), any(Pageable.class))).thenReturn(response);
 
         // Act
-        mockMvc.perform(get("/api/v1/search/fact-product-shoes")
+        mockMvc.perform(get("/search/fact-product-shoes")
                         .param("q", "nike shoes")
-                        .param("useVector", "true")
                         .param("page", "1")
                         .param("size", "5")
                         .param("sort", "priceSale,desc")
@@ -66,7 +64,7 @@ class TextSearchControllerTest {
         ArgumentCaptor<String> queryCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
 
-        verify(textSearchService).search(queryCaptor.capture(), anyBoolean(), pageableCaptor.capture());
+        verify(textSearchService).search(queryCaptor.capture(), pageableCaptor.capture());
 
         assertThat(queryCaptor.getValue()).isEqualTo("nike shoes");
         Pageable pageable = pageableCaptor.getValue();
@@ -78,7 +76,7 @@ class TextSearchControllerTest {
     @Test
     void searchFactProductShoesByText_rejectsInvalidCharacters() throws Exception {
         // Arrange / Act / Assert
-        mockMvc.perform(get("/api/v1/search/fact-product-shoes")
+        mockMvc.perform(get("/search/fact-product-shoes")
                         .param("q", "<script>")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());

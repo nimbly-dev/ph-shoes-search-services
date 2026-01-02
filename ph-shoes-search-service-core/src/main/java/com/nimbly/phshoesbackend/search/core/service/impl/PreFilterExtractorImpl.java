@@ -21,7 +21,7 @@ public class PreFilterExtractorImpl implements PreFilterExtractor {
     );
 
     private static final Pattern UNDER = Pattern.compile("\\b(?:under|below)\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern OVER  = Pattern.compile("\\b(?:over|above)\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern OVER = Pattern.compile("\\b(?:over|above)\\s*(\\d+)", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern SIZES = Pattern.compile(
             "(?:\\bsize(?:s)?\\b\\s*([0-9]+(?:\\.[05])?(?:\\s*(?:,|and)\\s*[0-9]+(?:\\.[05])?)*))" +
@@ -35,17 +35,17 @@ public class PreFilterExtractorImpl implements PreFilterExtractor {
         AISearchFilterCriteria c = new AISearchFilterCriteria();
 
         List<String> found = BRANDS.stream()
-                .filter(b -> lower.contains(b))
-                .map(b -> b.replaceAll("\\s+", ""))
+                .filter(brandToken -> lower.contains(brandToken))
+                .map(brandToken -> brandToken.replaceAll("\\s+", ""))
                 .collect(Collectors.toList());
         if (!found.isEmpty()) c.setBrands(found);
 
         c.setOnSale(lower.contains("on sale"));
 
-        Matcher m = UNDER.matcher(lower);
-        if (m.find()) c.setPriceSaleMax(Double.valueOf(m.group(1)));
-        m = OVER.matcher(lower);
-        if (m.find()) c.setPriceSaleMin(Double.valueOf(m.group(1)));
+        Matcher underMatcher = UNDER.matcher(lower);
+        if (underMatcher.find()) c.setPriceSaleMax(Double.valueOf(underMatcher.group(1)));
+        Matcher overMatcher = OVER.matcher(lower);
+        if (overMatcher.find()) c.setPriceSaleMin(Double.valueOf(overMatcher.group(1)));
 
         if (lower.matches(".*\\b(cheapest|lowest)\\b.*")) {
             c.setSortBy("price_asc");
@@ -55,18 +55,7 @@ public class PreFilterExtractorImpl implements PreFilterExtractor {
 
         boolean hasSizeCue = lower.matches(".*\\b(size|sizes|us|eu|uk)\\b.*");
         if (hasSizeCue) {
-            List<String> sizes = new ArrayList<>();
-            Matcher sm = SIZES.matcher(q == null ? "" : q);
-            while (sm.find()) {
-                String group = sm.group(1) != null ? sm.group(1) : sm.group(2);
-                if (group != null) {
-                    for (String tok : group.split("\\s*(?:,|and)\\s*")) {
-                        String norm = tok.trim().toLowerCase().replaceAll("^(us|eu|uk)\\s*", "")
-                                .replaceAll("[^0-9\\.]", "");
-                        if (!norm.isBlank()) sizes.add(norm);
-                    }
-                }
-            }
+            List<String> sizes = extractExplicitSizes(q);
             if (!sizes.isEmpty()) {
                 c.setSizes(sizes);
                 log.info("Extracted explicit sizes {} from query='{}'", sizes, q);
@@ -74,6 +63,34 @@ public class PreFilterExtractorImpl implements PreFilterExtractor {
         }
 
         return c;
+    }
+
+    private List<String> extractExplicitSizes(String query) {
+        List<String> sizes = new ArrayList<>();
+        Matcher sizeMatcher = SIZES.matcher(query == null ? "" : query);
+        while (sizeMatcher.find()) {
+            String group = sizeMatcher.group(1) != null ? sizeMatcher.group(1) : sizeMatcher.group(2);
+            if (group == null) {
+                continue;
+            }
+            for (String token : group.split("\\s*(?:,|and)\\s*")) {
+                String normalizedToken = token.trim().toLowerCase().replaceAll("^(us|eu|uk)\\s*", "")
+                        .replaceAll("[^0-9\\.]", "");
+                if (normalizedToken.isBlank()) {
+                    continue;
+                }
+                try {
+                    double numericSize = Double.parseDouble(normalizedToken);
+                    if (numericSize > 100) {
+                        continue;
+                    }
+                } catch (NumberFormatException ignored) {
+                    continue;
+                }
+                sizes.add(normalizedToken);
+            }
+        }
+        return sizes;
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.nimbly.phshoesbackend.search.core.util;
 
 import com.nimbly.phshoesbackend.search.core.model.AISearchFilterCriteria;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Objects;
@@ -9,154 +8,154 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@Component
 public class FilterNormalizer {
 
-    public static void normalize(AISearchFilterCriteria c) {
-        if (c == null) return;
-        normalizeBrands(c);
-        normalizeGender(c);
-        normalizeKeywordLists(c);
-        disambiguateSizeVsModel(c);
-        normalizePrices(c);
-        normalizeSizes(c);
+    public static void normalize(AISearchFilterCriteria criteria) {
+        if (criteria == null) return;
+        normalizeBrands(criteria);
+        normalizeGender(criteria);
+        normalizeKeywordLists(criteria);
+        disambiguateSizeVsModel(criteria);
+        normalizePrices(criteria);
+        normalizeSizes(criteria);
     }
 
-    private static void normalizeBrands(AISearchFilterCriteria c) {
-        if (c.getBrands() == null) return;
-        List<String> b = c.getBrands().stream()
+    private static void normalizeBrands(AISearchFilterCriteria criteria) {
+        if (criteria.getBrands() == null) return;
+        List<String> normalizedBrands = criteria.getBrands().stream()
                 .filter(Objects::nonNull)
-                .map(s -> s.trim().toLowerCase())
-                .map(s -> s.replaceAll("\\s+", ""))
-                .filter(s -> !s.isBlank())
+                .map(brand -> brand.trim().toLowerCase())
+                .map(brand -> brand.replaceAll("\\s+", ""))
+                .filter(brand -> !brand.isBlank())
                 .distinct()
                 .collect(Collectors.toList());
-        c.setBrands(b.isEmpty() ? null : b);
+        criteria.setBrands(normalizedBrands.isEmpty() ? null : normalizedBrands);
     }
 
-    private static void normalizeGender(AISearchFilterCriteria c) {
-        if (c.getGender() == null) return;
-        String g = c.getGender().trim().toLowerCase();
-        if (g.startsWith("m")) g = "male";
-        else if (g.startsWith("f")) g = "female";
-        else if (g.contains("kid")) g = "kids";
-        else if (g.contains("uni")) g = "unisex";
-        c.setGender(g);
+    private static void normalizeGender(AISearchFilterCriteria criteria) {
+        if (criteria.getGender() == null) return;
+        String normalizedGender = criteria.getGender().trim().toLowerCase();
+        if (normalizedGender.startsWith("m")) normalizedGender = "male";
+        else if (normalizedGender.startsWith("f")) normalizedGender = "female";
+        else if (normalizedGender.contains("kid")) normalizedGender = "kids";
+        else if (normalizedGender.contains("uni")) normalizedGender = "unisex";
+        criteria.setGender(normalizedGender);
     }
 
-    private static void normalizeKeywordLists(AISearchFilterCriteria c) {
-        if (c.getTitleKeywords() != null) {
-            c.setTitleKeywords(c.getTitleKeywords().stream()
+    private static void normalizeKeywordLists(AISearchFilterCriteria criteria) {
+        if (criteria.getTitleKeywords() != null) {
+            criteria.setTitleKeywords(criteria.getTitleKeywords().stream()
                     .filter(Objects::nonNull)
-                    .map(s -> s.trim().toLowerCase())
-                    .filter(s -> !s.isBlank())
+                    .map(keyword -> keyword.trim().toLowerCase())
+                    .filter(keyword -> !keyword.isBlank())
                     .distinct()
                     .collect(Collectors.toList()));
-            if (c.getTitleKeywords().isEmpty()) c.setTitleKeywords(null);
+            if (criteria.getTitleKeywords().isEmpty()) criteria.setTitleKeywords(null);
         }
-        if (c.getSubtitleKeywords() != null) {
-            c.setSubtitleKeywords(c.getSubtitleKeywords().stream()
+        if (criteria.getSubtitleKeywords() != null) {
+            criteria.setSubtitleKeywords(criteria.getSubtitleKeywords().stream()
                     .filter(Objects::nonNull)
-                    .map(s -> s.trim().toLowerCase())
-                    .filter(s -> !s.isBlank())
+                    .map(keyword -> keyword.trim().toLowerCase())
+                    .filter(keyword -> !keyword.isBlank())
                     .distinct()
                     .collect(Collectors.toList()));
-            if (c.getSubtitleKeywords().isEmpty()) c.setSubtitleKeywords(null);
+            if (criteria.getSubtitleKeywords().isEmpty()) criteria.setSubtitleKeywords(null);
         }
     }
 
-    private static void normalizePrices(AISearchFilterCriteria c) {
-        Double sMin = c.getPriceSaleMin();
-        Double sMax = c.getPriceSaleMax();
+    private static void normalizePrices(AISearchFilterCriteria criteria) {
+        Double sMin = criteria.getPriceSaleMin();
+        Double sMax = criteria.getPriceSaleMax();
 
         if (sMin != null && sMax != null) {
             if (Double.compare(sMin, sMax) == 0) {
-                c.setPriceSaleMin(null);
+                criteria.setPriceSaleMin(null);
             } else if (sMin > sMax) {
-                c.setPriceSaleMin(sMax);
-                c.setPriceSaleMax(sMin);
+                criteria.setPriceSaleMin(sMax);
+                criteria.setPriceSaleMax(sMin);
             }
         }
 
-        Double oMin = c.getPriceOriginalMin();
-        Double oMax = c.getPriceOriginalMax();
+        Double oMin = criteria.getPriceOriginalMin();
+        Double oMax = criteria.getPriceOriginalMax();
 
         if (oMin != null && oMax != null) {
             if (Double.compare(oMin, oMax) == 0) {
-                c.setPriceOriginalMin(null);
+                criteria.setPriceOriginalMin(null);
             } else if (oMin > oMax) {
-                c.setPriceOriginalMin(oMax);
-                c.setPriceOriginalMax(oMin);
+                criteria.setPriceOriginalMin(oMax);
+                criteria.setPriceOriginalMax(oMin);
             }
         }
 
-        if (c.getPriceSaleMin() != null || c.getPriceSaleMax() != null) {
-            if (Objects.equals(c.getPriceOriginalMin(), c.getPriceSaleMin())) c.setPriceOriginalMin(null);
-            if (Objects.equals(c.getPriceOriginalMax(), c.getPriceSaleMax())) c.setPriceOriginalMax(null);
+        if (criteria.getPriceSaleMin() != null || criteria.getPriceSaleMax() != null) {
+            if (Objects.equals(criteria.getPriceOriginalMin(), criteria.getPriceSaleMin())) criteria.setPriceOriginalMin(null);
+            if (Objects.equals(criteria.getPriceOriginalMax(), criteria.getPriceSaleMax())) criteria.setPriceOriginalMax(null);
         }
     }
 
-    private static void disambiguateSizeVsModel(AISearchFilterCriteria c) {
-        List<String> sizes = c.getSizes();
+    private static void disambiguateSizeVsModel(AISearchFilterCriteria criteria) {
+        List<String> sizes = criteria.getSizes();
         if (sizes == null || sizes.isEmpty()) return;
 
-        String modelLc = Optional.ofNullable(c.getModel()).orElse("").toLowerCase();
+        String modelLc = Optional.ofNullable(criteria.getModel()).orElse("").toLowerCase();
         String titleKwLc = String.join(" ",
-                Optional.ofNullable(c.getTitleKeywords()).orElse(List.of())
+                Optional.ofNullable(criteria.getTitleKeywords()).orElse(List.of())
         ).toLowerCase();
 
         boolean unitInSizes = sizes.stream()
                 .filter(Objects::nonNull)
-                .map(s -> s.toLowerCase().trim())
-                .anyMatch(s -> s.matches("^(?:us|eu|uk)\\s*\\d+(?:\\.\\d+)?") || s.startsWith("size "));
+                .map(sizeToken -> sizeToken.toLowerCase().trim())
+                .anyMatch(sizeToken -> sizeToken.matches("^(?:us|eu|uk)\\s*\\d+(?:\\.\\d+)?")
+                        || sizeToken.startsWith("size "));
 
         boolean cueInKeywords =
-                containsCueTokens(c.getSubtitleKeywords()) || containsCueTokens(c.getTitleKeywords());
+                containsCueTokens(criteria.getSubtitleKeywords()) || containsCueTokens(criteria.getTitleKeywords());
 
         boolean hasExplicitSizeCue = unitInSizes || cueInKeywords;
 
         boolean overlapsModel = sizes.stream()
                 .filter(Objects::nonNull)
-                .map(s -> s.trim().toLowerCase())
-                .filter(s -> !s.isEmpty())
-                .anyMatch(s -> {
-                    String boundary = "\\b" + Pattern.quote(s) + "\\b";
+                .map(sizeToken -> sizeToken.trim().toLowerCase())
+                .filter(sizeToken -> !sizeToken.isEmpty())
+                .anyMatch(sizeToken -> {
+                    String boundary = "\\b" + Pattern.quote(sizeToken) + "\\b";
                     return Pattern.compile(boundary).matcher(modelLc).find()
                             || Pattern.compile(boundary).matcher(titleKwLc).find();
                 });
 
         if (!hasExplicitSizeCue && overlapsModel) {
-            c.setSizes(null);
+            criteria.setSizes(null);
         }
     }
 
     private static boolean containsCueTokens(List<String> words) {
         if (words == null || words.isEmpty()) return false;
-        for (String w : words) {
-            if (w == null) continue;
-            String s = w.toLowerCase();
-            if (s.contains(" size ") || s.startsWith("size ")
-                    || s.equals("size") || s.equals("sizes")
-                    || s.contains(" us ") || s.startsWith("us ")
-                    || s.contains(" eu ") || s.startsWith("eu ")
-                    || s.contains(" uk ") || s.startsWith("uk ")) {
+        for (String word : words) {
+            if (word == null) continue;
+            String token = word.toLowerCase();
+            if (token.contains(" size ") || token.startsWith("size ")
+                    || token.equals("size") || token.equals("sizes")
+                    || token.contains(" us ") || token.startsWith("us ")
+                    || token.contains(" eu ") || token.startsWith("eu ")
+                    || token.contains(" uk ") || token.startsWith("uk ")) {
                 return true;
             }
         }
         return false;
     }
 
-    private static void normalizeSizes(AISearchFilterCriteria c) {
-        if (c.getSizes() == null) return;
-        List<String> s = c.getSizes().stream()
+    private static void normalizeSizes(AISearchFilterCriteria criteria) {
+        if (criteria.getSizes() == null) return;
+        List<String> normalizedSizes = criteria.getSizes().stream()
                 .filter(Objects::nonNull)
-                .map(x -> x.trim().toLowerCase())
-                .map(x -> x.replaceAll("^(us|eu|uk)\\s*", ""))
-                .map(x -> x.replaceAll("[^0-9\\.]", ""))
-                .filter(x -> !x.isBlank())
+                .map(sizeToken -> sizeToken.trim().toLowerCase())
+                .map(sizeToken -> sizeToken.replaceAll("^(us|eu|uk)\\s*", ""))
+                .map(sizeToken -> sizeToken.replaceAll("[^0-9\\.]", ""))
+                .filter(sizeToken -> !sizeToken.isBlank())
                 .distinct()
                 .collect(Collectors.toList());
-        c.setSizes(s.isEmpty() ? null : s);
+        criteria.setSizes(normalizedSizes.isEmpty() ? null : normalizedSizes);
     }
 }
 

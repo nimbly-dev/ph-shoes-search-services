@@ -15,75 +15,83 @@ import java.util.Optional;
 public class FilterPipeline {
     private final PreFilterExtractor pre;
     private final OpenAiIntentParserService intent;
-    private final FilterNormalizer normalizer;
     private final FilterValidator validator;
 
     public FilterPipeline(
             PreFilterExtractor pre,
             OpenAiIntentParserService intent,
-            FilterNormalizer normalizer,
             FilterValidator validator
     ) {
         this.pre = pre;
         this.intent = intent;
-        this.normalizer = normalizer;
         this.validator = validator;
     }
 
     public AISearchFilterCriteria process(String nlQuery) {
-        AISearchFilterCriteria base = pre.extract(nlQuery);
+        AISearchFilterCriteria baseCriteria = pre.extract(nlQuery);
 
         String leftover = pre.strip(nlQuery);
-        AISearchFilterCriteria fuzzy = intent.parseIntent(leftover);
+        AISearchFilterCriteria aiCriteria = intent.parseIntent(leftover);
 
-        merge(base, fuzzy);
+        merge(baseCriteria, aiCriteria);
 
-        FilterNormalizer.normalize(base);
-        validator.validate(base);
-        FilterNormalizer.normalize(base);
+        FilterNormalizer.normalize(baseCriteria);
+        validator.validate(baseCriteria);
+        FilterNormalizer.normalize(baseCriteria);
 
         log.info("AI filter pipeline for query='{}' → brands={}, model={}, titleKeywords={}, sizes={}, priceSaleMin={}, priceSaleMax={}, sortBy={}",
                 nlQuery,
-                base.getBrands(),
-                base.getModel(),
-                base.getTitleKeywords(),
-                base.getSizes(),
-                base.getPriceSaleMin(),
-                base.getPriceSaleMax(),
-                base.getSortBy());
+                baseCriteria.getBrands(),
+                baseCriteria.getModel(),
+                baseCriteria.getTitleKeywords(),
+                baseCriteria.getSizes(),
+                baseCriteria.getPriceSaleMin(),
+                baseCriteria.getPriceSaleMax(),
+                baseCriteria.getSortBy());
 
-        return base;
+        return baseCriteria;
     }
 
-    private void merge(AISearchFilterCriteria base, AISearchFilterCriteria fuzzy) {
-        if (fuzzy.getBrands() != null && !fuzzy.getBrands().isEmpty()) {
-            base.setBrands(new ArrayList<>(fuzzy.getBrands()));
+    private void merge(AISearchFilterCriteria baseCriteria, AISearchFilterCriteria aiCriteria) {
+        if (aiCriteria.getBrands() != null && !aiCriteria.getBrands().isEmpty()) {
+            baseCriteria.setBrands(new ArrayList<>(aiCriteria.getBrands()));
         }
 
-        Optional.ofNullable(fuzzy.getGender()).ifPresent(base::setGender);
-        Optional.ofNullable(fuzzy.getPriceSaleMin()).ifPresent(base::setPriceSaleMin);
-        Optional.ofNullable(fuzzy.getPriceSaleMax()).ifPresent(base::setPriceSaleMax);
-        Optional.ofNullable(fuzzy.getPriceOriginalMin()).ifPresent(base::setPriceOriginalMin);
-        Optional.ofNullable(fuzzy.getPriceOriginalMax()).ifPresent(base::setPriceOriginalMax);
-        base.setOnSale(fuzzy.getOnSale());
+        Optional.ofNullable(aiCriteria.getGender()).ifPresent(baseCriteria::setGender);
+        Optional.ofNullable(aiCriteria.getPriceSaleMin()).ifPresent(baseCriteria::setPriceSaleMin);
+        Optional.ofNullable(aiCriteria.getPriceSaleMax()).ifPresent(baseCriteria::setPriceSaleMax);
+        Optional.ofNullable(aiCriteria.getPriceOriginalMin()).ifPresent(baseCriteria::setPriceOriginalMin);
+        Optional.ofNullable(aiCriteria.getPriceOriginalMax()).ifPresent(baseCriteria::setPriceOriginalMax);
+        baseCriteria.setOnSale(aiCriteria.getOnSale());
 
-        String aiSort = fuzzy.getSortBy();
-        if (StringUtils.hasText(aiSort)) {
-            base.setSortBy(aiSort);
-            base.setBrands(List.of());
-            base.setModel(null);
-            base.setTitleKeywords(List.of());
-            base.setSubtitleKeywords(List.of());
+        if (applyAiSortOverride(baseCriteria, aiCriteria)) {
             return;
         }
 
-        base.setModel(fuzzy.getModel());
+        baseCriteria.setModel(aiCriteria.getModel());
 
         List<String> titleKeywords = new ArrayList<>();
-        if (base.getTitleKeywords() != null) titleKeywords.addAll(base.getTitleKeywords());
-        if (fuzzy.getTitleKeywords() != null) titleKeywords.addAll(fuzzy.getTitleKeywords());
-        base.setTitleKeywords(titleKeywords);
+        if (baseCriteria.getTitleKeywords() != null) {
+            titleKeywords.addAll(baseCriteria.getTitleKeywords());
+        }
+        if (aiCriteria.getTitleKeywords() != null) {
+            titleKeywords.addAll(aiCriteria.getTitleKeywords());
+        }
+        baseCriteria.setTitleKeywords(titleKeywords);
 
-        base.setSubtitleKeywords(List.of());
+        baseCriteria.setSubtitleKeywords(List.of());
+    }
+
+    private boolean applyAiSortOverride(AISearchFilterCriteria baseCriteria, AISearchFilterCriteria aiCriteria) {
+        String aiSort = aiCriteria.getSortBy();
+        if (!StringUtils.hasText(aiSort)) {
+            return false;
+        }
+        baseCriteria.setSortBy(aiSort);
+        baseCriteria.setBrands(List.of());
+        baseCriteria.setModel(null);
+        baseCriteria.setTitleKeywords(List.of());
+        baseCriteria.setSubtitleKeywords(List.of());
+        return true;
     }
 }

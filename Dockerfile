@@ -4,9 +4,7 @@ WORKDIR /workspace
 
 ARG GH_ACTOR
 ARG GH_PACKAGES_TOKEN
-ARG MAVEN_ACTIVE_PROFILES=prod
 ENV MAVEN_SETTINGS_PATH=/tmp/maven-settings.xml
-ENV SPRING_PROFILES_ACTIVE=${MAVEN_ACTIVE_PROFILES}
 
 RUN printf '%s\n' \
     '<settings>' \
@@ -34,18 +32,17 @@ COPY pom.xml .
 COPY ph-shoes-search-service-core/pom.xml ph-shoes-search-service-core/pom.xml
 COPY ph-shoes-text-search-service-web/pom.xml ph-shoes-text-search-service-web/pom.xml
 COPY docs ./docs
-RUN --mount=type=cache,target=/root/.m2 mvn -s ${MAVEN_SETTINGS_PATH} -q -e -U -P${MAVEN_ACTIVE_PROFILES} -DskipTests dependency:go-offline
+RUN --mount=type=cache,target=/root/.m2 mvn -s ${MAVEN_SETTINGS_PATH} -q -e -U dependency:go-offline
 
 COPY ph-shoes-search-service-core ./ph-shoes-search-service-core
 COPY ph-shoes-text-search-service-web ./ph-shoes-text-search-service-web
-RUN --mount=type=cache,target=/root/.m2 mvn -s ${MAVEN_SETTINGS_PATH} -q -pl ph-shoes-text-search-service-web -am -P${MAVEN_ACTIVE_PROFILES} -DskipTests package
+RUN --mount=type=cache,target=/root/.m2 mvn -s ${MAVEN_SETTINGS_PATH} -q -pl ph-shoes-text-search-service-web -am package
 RUN rm -f ${MAVEN_SETTINGS_PATH}
 
 ## ---------- Runtime stage ----------
 FROM amazoncorretto:21-alpine AS runtime
 ENV APP_HOME=/app \
     JAVA_TOOL_OPTIONS="-XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp -XX:MaxRAMPercentage=75" \
-    SPRING_PROFILES_ACTIVE=prod \
     PORT=8084
 
 RUN addgroup -S spring && adduser -S spring -G spring
@@ -57,4 +54,27 @@ WORKDIR ${APP_HOME}
 COPY --from=build /workspace/ph-shoes-text-search-service-web/target/*.jar app.jar
 
 EXPOSE ${PORT}
-ENTRYPOINT ["java","-Dspring.profiles.active=prod","-jar","/app/app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]
+
+## ---------- Dev stage ----------
+FROM maven:3-amazoncorretto-21 AS dev
+WORKDIR /app
+RUN mkdir -p /root/.m2 && printf '%s\n' \
+  '<settings>' \
+  '  <servers>' \
+  '    <server><id>github-nimbly-commons</id><username>${env.GH_ACTOR}</username><password>${env.GH_PACKAGES_TOKEN}</password></server>' \
+  '    <server><id>github-nimbly-catalog</id><username>${env.GH_ACTOR}</username><password>${env.GH_PACKAGES_TOKEN}</password></server>' \
+  '    <server><id>github-nimbly-starters</id><username>${env.GH_ACTOR}</username><password>${env.GH_PACKAGES_TOKEN}</password></server>' \
+  '  </servers>' \
+  '</settings>' \
+  > /root/.m2/settings.xml
+
+COPY pom.xml .
+COPY ph-shoes-search-service-core/pom.xml ph-shoes-search-service-core/pom.xml
+COPY ph-shoes-text-search-service-web/pom.xml ph-shoes-text-search-service-web/pom.xml
+COPY docs ./docs
+COPY ph-shoes-search-service-core ./ph-shoes-search-service-core
+COPY ph-shoes-text-search-service-web ./ph-shoes-text-search-service-web
+
+EXPOSE 8084
+CMD ["bash","-lc","mvn -pl ph-shoes-text-search-service-web -am -U package && java -jar ph-shoes-text-search-service-web/target/*.jar"]

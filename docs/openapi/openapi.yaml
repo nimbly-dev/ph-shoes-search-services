@@ -23,15 +23,6 @@ paths:
             type: string
           description: Natural language query describing what shoes to find.
         - in: query
-          name: useVector
-          required: false
-          schema:
-            type: boolean
-            default: true
-          description: >
-            When true, use vector similarity as a fallback and for ranking
-            when filters alone return few or no matches.
-        - in: query
           name: page
           required: false
           schema:
