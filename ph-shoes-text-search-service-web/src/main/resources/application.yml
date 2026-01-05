@@ -10,6 +10,10 @@ app:
 server:
   port: ${PORT:8084}
 
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_APIDOCS_ENABLED:false}
+
 spring:
   application:
     name: ph-shoes-text-search-service
