@@ -19,7 +19,7 @@ spring:
     name: ph-shoes-text-search-service
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:snowflake://${SNOWFLAKE_ACCOUNT}.snowflakecomputing.com?warehouse=${SNOWFLAKE_WAREHOUSE}&db=${SNOWFLAKE_DATABASE}&schema=${SNOWFLAKE_SCHEMA}&role=${SNOWFLAKE_ROLE}&JDBC_QUERY_RESULT_FORMAT=JSON}
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:net.snowflake.client.jdbc.SnowflakeDriver}
+    driver-class-name: net.snowflake.client.jdbc.SnowflakeDriver
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
