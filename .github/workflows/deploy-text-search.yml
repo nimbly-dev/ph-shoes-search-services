@@ -51,6 +51,7 @@ jobs:
           fi
           docker build \
             -f Dockerfile \
+            --target runtime \
             --build-arg GH_ACTOR="$GH_ACTOR_VALUE" \
             --build-arg GH_PACKAGES_TOKEN="${GH_PACKAGES_TOKEN}" \
             --build-arg HTTP_PROXY= \
