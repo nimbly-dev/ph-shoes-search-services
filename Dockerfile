@@ -56,25 +56,3 @@ COPY --from=build /workspace/ph-shoes-text-search-service-web/target/*.jar app.j
 EXPOSE ${PORT}
 ENTRYPOINT ["java","-jar","/app/app.jar"]
 
-## ---------- Dev stage ----------
-FROM maven:3-amazoncorretto-21 AS dev
-WORKDIR /app
-RUN mkdir -p /root/.m2 && printf '%s\n' \
-  '<settings>' \
-  '  <servers>' \
-  '    <server><id>github-nimbly-commons</id><username>${env.GH_ACTOR}</username><password>${env.GH_PACKAGES_TOKEN}</password></server>' \
-  '    <server><id>github-nimbly-catalog</id><username>${env.GH_ACTOR}</username><password>${env.GH_PACKAGES_TOKEN}</password></server>' \
-  '    <server><id>github-nimbly-starters</id><username>${env.GH_ACTOR}</username><password>${env.GH_PACKAGES_TOKEN}</password></server>' \
-  '  </servers>' \
-  '</settings>' \
-  > /root/.m2/settings.xml
-
-COPY pom.xml .
-COPY ph-shoes-search-service-core/pom.xml ph-shoes-search-service-core/pom.xml
-COPY ph-shoes-text-search-service-web/pom.xml ph-shoes-text-search-service-web/pom.xml
-COPY docs ./docs
-COPY ph-shoes-search-service-core ./ph-shoes-search-service-core
-COPY ph-shoes-text-search-service-web ./ph-shoes-text-search-service-web
-
-EXPOSE 8084
-CMD ["bash","-lc","mvn -pl ph-shoes-text-search-service-web -am -U package && java -jar ph-shoes-text-search-service-web/target/*.jar"]
