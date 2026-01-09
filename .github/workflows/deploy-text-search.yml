@@ -21,6 +21,8 @@ jobs:
       AWS_REGION: us-east-1
       ECR_REPOSITORY_URI: ${{ secrets.ECR_REPOSITORY_URI }}
       IMAGE_TAG: ${{ github.sha }}
+      GH_ACTOR: ${{ secrets.GH_ACTOR }}
+      GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
 
     steps:
       - name: Checkout
