@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +58,9 @@ class TextSearchServiceImplTest {
         when(shoe.getImage()).thenReturn("http://invalid uri");
         when(shoe.getPriceSale()).thenReturn(3000.0);
         when(shoe.getPriceOriginal()).thenReturn(4500.0);
+        when(shoe.getYear()).thenReturn(2026);
+        when(shoe.getMonth()).thenReturn(1);
+        when(shoe.getDay()).thenReturn(24);
         when(shoe.getGender()).thenReturn("unisex");
         when(shoe.getAgeGroup()).thenReturn("adult");
         when(shoe.getExtra()).thenReturn("{\"sizes\": [\"10\", \"11\"]}");
@@ -79,6 +83,7 @@ class TextSearchServiceImplTest {
         assertThat(result.getId()).isEqualTo("1");
         assertThat(result.getUrl().toString()).isEqualTo("https://example.com/shoe/1");
         assertThat(result.getImage()).isNull();
+        assertThat(result.getCollectedDate()).isEqualTo(LocalDate.of(2026, 1, 24));
         assertThat(result.getSizes()).containsExactly("10", "11");
     }
 

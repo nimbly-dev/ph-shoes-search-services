@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -97,6 +98,7 @@ public class TextSearchServiceImpl implements TextSearchService {
         result.setImage(parseUri(shoe.getImage(), null));
         result.setPriceSale(shoe.getPriceSale());
         result.setPriceOriginal(shoe.getPriceOriginal());
+        result.setCollectedDate(buildCollectedDate(shoe));
         result.setGender(shoe.getGender());
         result.setAgeGroup(shoe.getAgeGroup());
         result.setSizes(extractSizes(shoe));
@@ -146,6 +148,20 @@ public class TextSearchServiceImpl implements TextSearchService {
                 }
             }
             return sizes.isEmpty() ? null : sizes;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private LocalDate buildCollectedDate(CatalogShoe shoe) {
+        Integer year = shoe.getYear();
+        Integer month = shoe.getMonth();
+        Integer day = shoe.getDay();
+        if (year == null || month == null || day == null) {
+            return null;
+        }
+        try {
+            return LocalDate.of(year, month, day);
         } catch (Exception e) {
             return null;
         }
