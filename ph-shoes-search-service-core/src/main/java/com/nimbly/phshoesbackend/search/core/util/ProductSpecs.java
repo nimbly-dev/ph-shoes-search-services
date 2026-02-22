@@ -105,5 +105,14 @@ public class ProductSpecs {
             return cb.or(sizeMatches);
         };
     }
+
+    public static Specification<CatalogShoe> collectedOnDateKey(int dateKey) {
+        return (root, query, cb) -> {
+            Expression<Integer> yearComponent = cb.prod(root.get("year"), 10000);
+            Expression<Integer> monthComponent = cb.prod(root.get("month"), 100);
+            Expression<Integer> dateKeyExpr = cb.sum(cb.sum(yearComponent, monthComponent), root.get("day"));
+            return cb.equal(dateKeyExpr, dateKey);
+        };
+    }
 }
 
