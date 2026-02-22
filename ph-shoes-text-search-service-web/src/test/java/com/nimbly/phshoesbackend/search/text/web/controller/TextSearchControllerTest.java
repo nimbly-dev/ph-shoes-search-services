@@ -82,6 +82,28 @@ class TextSearchControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void searchFactProductShoesByText_defaultsSortToLatestDate() throws Exception {
+        // Arrange
+        TextSearchResponse response = buildResponse();
+        when(textSearchService.search(any(), any(Pageable.class))).thenReturn(response);
+
+        // Act
+        mockMvc.perform(get("/search/fact-product-shoes")
+                        .param("q", "nike shoes")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        // Assert
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(textSearchService).search(any(), pageableCaptor.capture());
+        Pageable pageable = pageableCaptor.getValue();
+        assertThat(pageable.getSort().getOrderFor("year")).isNotNull();
+        assertThat(pageable.getSort().getOrderFor("month")).isNotNull();
+        assertThat(pageable.getSort().getOrderFor("day")).isNotNull();
+        assertThat(pageable.getSort().getOrderFor("year").getDirection()).isEqualTo(org.springframework.data.domain.Sort.Direction.DESC);
+    }
+
     private TextSearchResponse buildResponse() {
         TextSearchResponseFilter filter = new TextSearchResponseFilter()
                 .brands(List.of("nike"))

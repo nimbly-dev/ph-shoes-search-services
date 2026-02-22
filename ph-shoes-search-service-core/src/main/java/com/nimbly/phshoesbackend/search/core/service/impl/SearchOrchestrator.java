@@ -16,8 +16,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -40,9 +38,9 @@ public class SearchOrchestrator {
             Pageable pageable
     ) {
         Specification<CatalogShoe> baseSpec = specBuilder.build(criteria);
-        Specification<CatalogShoe> latestDateSpec = buildLatestCollectedDateSpec(criteria);
-        if (latestDateSpec != null) {
-            baseSpec = baseSpec.and(latestDateSpec);
+        Integer latestDateKey = resolveLatestCollectedDateKey(baseSpec);
+        if (latestDateKey != null) {
+            baseSpec = baseSpec.and(ProductSpecs.collectedOnDateKey(latestDateKey));
         }
 
         Page<CatalogShoe> page;
@@ -84,60 +82,18 @@ public class SearchOrchestrator {
         return page;
     }
 
-    private Specification<CatalogShoe> buildLatestCollectedDateSpec(AISearchFilterCriteria criteria) {
-        List<CatalogShoeRepository.LatestData> latestByBrand = catalogShoeRepository.findLatestDatePerBrand();
-        if (latestByBrand == null || latestByBrand.isEmpty()) {
+    private Integer resolveLatestCollectedDateKey(Specification<CatalogShoe> baseSpec) {
+        Page<CatalogShoe> latestPage = catalogShoeRepository.findAll(
+                baseSpec,
+                PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "year", "month", "day"))
+        );
+        if (latestPage == null || latestPage.isEmpty()) {
             return null;
         }
-
-        Set<String> brandSet = normalizeBrands(criteria.getBrands());
-        Integer latestDateKey;
-        if (!brandSet.isEmpty()) {
-            latestDateKey = latestByBrand.stream()
-                    .filter(item -> item.getBrand() != null && brandSet.contains(item.getBrand().toLowerCase()))
-                    .map(item -> parseDateKey(item.getLatestDwid()))
-                    .filter(Objects::nonNull)
-                    .max(Integer::compareTo)
-                    .orElse(null);
-        } else {
-            latestDateKey = latestByBrand.stream()
-                    .map(item -> parseDateKey(item.getLatestDwid()))
-                    .filter(Objects::nonNull)
-                    .max(Integer::compareTo)
-                    .orElse(null);
-        }
-
-        if (latestDateKey == null) {
+        CatalogShoe latest = latestPage.getContent().get(0);
+        if (latest.getYear() == null || latest.getMonth() == null || latest.getDay() == null) {
             return null;
         }
-
-        return ProductSpecs.collectedOnDateKey(latestDateKey);
-    }
-
-    private static Set<String> normalizeBrands(List<String> brands) {
-        if (brands == null || brands.isEmpty()) {
-            return Set.of();
-        }
-        return brands.stream()
-                .filter(Objects::nonNull)
-                .map(String::trim)
-                .filter(brand -> !brand.isBlank())
-                .map(String::toLowerCase)
-                .collect(Collectors.toSet());
-    }
-
-    private static Integer parseDateKey(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return null;
-        }
-        String digits = raw.replaceAll("\\D", "");
-        if (digits.length() != 8) {
-            return null;
-        }
-        try {
-            return Integer.valueOf(digits);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
+        return latest.getYear() * 10000 + latest.getMonth() * 100 + latest.getDay();
     }
 }

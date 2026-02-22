@@ -58,7 +58,7 @@ public class TextSearchController implements TextSearchApi {
     private Pageable buildPageable(Integer page, Integer size, String sort) {
         int pageNumber = page == null ? 0 : page;
         int pageSize = size == null ? 15 : size;
-        Sort sortSpec = Sort.unsorted();
+        Sort sortSpec = Sort.by(Sort.Direction.DESC, "year", "month", "day");
         if (StringUtils.hasText(sort)) {
             String[] parts = sort.split(",");
             String property = parts[0].trim();

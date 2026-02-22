@@ -47,22 +47,17 @@ class SearchOrchestratorTest {
         AISearchFilterCriteria criteria = new AISearchFilterCriteria();
         criteria.setSortBy("price_asc");
         Specification<CatalogShoe> spec = (root, query, cb) -> cb.conjunction();
+        CatalogShoe latest = new CatalogShoe();
+        latest.setId("id-1");
+        latest.setDwid("dwid-1");
+        latest.setYear(2025);
+        latest.setMonth(2);
+        latest.setDay(20);
+        Page<CatalogShoe> latestPage = new PageImpl<>(List.of(latest));
         Page<CatalogShoe> page = new PageImpl<>(List.of());
         when(specificationBuilder.build(criteria)).thenReturn(spec);
-        CatalogShoeRepository.LatestData latestData = new CatalogShoeRepository.LatestData() {
-            @Override
-            public String getBrand() {
-                return "Nike";
-            }
-
-            @Override
-            public String getLatestDwid() {
-                return "20250220";
-            }
-        };
-        when(catalogShoeRepository.findLatestDatePerBrand()).thenReturn(List.of(latestData));
         when(catalogShoeRepository.findAll(any(Specification.class), org.mockito.ArgumentMatchers.any(Pageable.class)))
-                .thenReturn(page);
+                .thenReturn(latestPage, page);
 
         Pageable inputPageable = PageRequest.of(1, 5, Sort.by("brand"));
 
@@ -71,9 +66,10 @@ class SearchOrchestratorTest {
 
         // Assert
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(catalogShoeRepository).findLatestDatePerBrand();
-        verify(catalogShoeRepository).findAll(any(Specification.class), pageableCaptor.capture());
-        Sort.Order order = pageableCaptor.getValue().getSort().getOrderFor("priceSale");
+        verify(catalogShoeRepository, org.mockito.Mockito.times(2))
+                .findAll(any(Specification.class), pageableCaptor.capture());
+        Pageable secondCall = pageableCaptor.getAllValues().get(1);
+        Sort.Order order = secondCall.getSort().getOrderFor("priceSale");
         assertThat(order).isNotNull();
         assertThat(order.isAscending()).isTrue();
     }
@@ -83,22 +79,17 @@ class SearchOrchestratorTest {
         // Arrange
         AISearchFilterCriteria criteria = new AISearchFilterCriteria();
         Specification<CatalogShoe> spec = (root, query, cb) -> cb.conjunction();
+        CatalogShoe latest = new CatalogShoe();
+        latest.setId("id-1");
+        latest.setDwid("dwid-1");
+        latest.setYear(2025);
+        latest.setMonth(2);
+        latest.setDay(20);
+        Page<CatalogShoe> latestPage = new PageImpl<>(List.of(latest));
         Page<CatalogShoe> page = new PageImpl<>(List.of());
         when(specificationBuilder.build(criteria)).thenReturn(spec);
-        CatalogShoeRepository.LatestData latestData = new CatalogShoeRepository.LatestData() {
-            @Override
-            public String getBrand() {
-                return "Nike";
-            }
-
-            @Override
-            public String getLatestDwid() {
-                return "20250220";
-            }
-        };
-        when(catalogShoeRepository.findLatestDatePerBrand()).thenReturn(List.of(latestData));
         when(catalogShoeRepository.findAll(any(Specification.class), org.mockito.ArgumentMatchers.any(Pageable.class)))
-                .thenReturn(page);
+                .thenReturn(latestPage, page);
 
         Pageable inputPageable = PageRequest.of(2, 10, Sort.by("brand"));
 
@@ -107,44 +98,28 @@ class SearchOrchestratorTest {
 
         // Assert
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(catalogShoeRepository).findLatestDatePerBrand();
-        verify(catalogShoeRepository).findAll(any(Specification.class), pageableCaptor.capture());
-        assertThat(pageableCaptor.getValue()).isEqualTo(inputPageable);
+        verify(catalogShoeRepository, org.mockito.Mockito.times(2))
+                .findAll(any(Specification.class), pageableCaptor.capture());
+        Pageable secondCall = pageableCaptor.getAllValues().get(1);
+        assertThat(secondCall).isEqualTo(inputPageable);
     }
 
     @Test
-    void search_usesBrandSpecificLatestDateWhenBrandsProvided() {
+    void search_addsLatestDateWhenFound() {
         // Arrange
         AISearchFilterCriteria criteria = new AISearchFilterCriteria();
-        criteria.setBrands(List.of("  Nike  ", "Adidas"));
         Specification<CatalogShoe> spec = (root, query, cb) -> cb.conjunction();
+        CatalogShoe latest = new CatalogShoe();
+        latest.setId("id-1");
+        latest.setDwid("dwid-1");
+        latest.setYear(2025);
+        latest.setMonth(2);
+        latest.setDay(19);
+        Page<CatalogShoe> latestPage = new PageImpl<>(List.of(latest));
         Page<CatalogShoe> page = new PageImpl<>(List.of());
         when(specificationBuilder.build(criteria)).thenReturn(spec);
-        CatalogShoeRepository.LatestData nike = new CatalogShoeRepository.LatestData() {
-            @Override
-            public String getBrand() {
-                return "Nike";
-            }
-
-            @Override
-            public String getLatestDwid() {
-                return "20250219";
-            }
-        };
-        CatalogShoeRepository.LatestData adidas = new CatalogShoeRepository.LatestData() {
-            @Override
-            public String getBrand() {
-                return "Adidas";
-            }
-
-            @Override
-            public String getLatestDwid() {
-                return "20250218";
-            }
-        };
-        when(catalogShoeRepository.findLatestDatePerBrand()).thenReturn(List.of(nike, adidas));
         when(catalogShoeRepository.findAll(any(Specification.class), org.mockito.ArgumentMatchers.any(Pageable.class)))
-                .thenReturn(page);
+                .thenReturn(latestPage, page);
 
         Pageable inputPageable = PageRequest.of(0, 5);
 
@@ -152,8 +127,12 @@ class SearchOrchestratorTest {
         orchestrator.search("query", criteria, inputPageable);
 
         // Assert
-        verify(catalogShoeRepository).findLatestDatePerBrand();
-        verify(catalogShoeRepository).findAll(any(Specification.class), any(Pageable.class));
+        ArgumentCaptor<Specification<CatalogShoe>> specCaptor = ArgumentCaptor.forClass(Specification.class);
+        verify(catalogShoeRepository, org.mockito.Mockito.times(2))
+                .findAll(specCaptor.capture(), any(Pageable.class));
+        List<Specification<CatalogShoe>> captured = specCaptor.getAllValues();
+        assertThat(captured.get(0)).isSameAs(spec);
+        assertThat(captured.get(1)).isNotSameAs(spec);
     }
 
     @Test
@@ -163,9 +142,8 @@ class SearchOrchestratorTest {
         Specification<CatalogShoe> spec = (root, query, cb) -> cb.conjunction();
         Page<CatalogShoe> page = new PageImpl<>(List.of());
         when(specificationBuilder.build(criteria)).thenReturn(spec);
-        when(catalogShoeRepository.findLatestDatePerBrand()).thenReturn(List.of());
-        when(catalogShoeRepository.findAll(eq(spec), org.mockito.ArgumentMatchers.any(Pageable.class)))
-                .thenReturn(page);
+        when(catalogShoeRepository.findAll(any(Specification.class), org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()), page);
 
         Pageable inputPageable = PageRequest.of(0, 5);
 
@@ -173,32 +151,29 @@ class SearchOrchestratorTest {
         orchestrator.search("query", criteria, inputPageable);
 
         // Assert
-        verify(catalogShoeRepository).findLatestDatePerBrand();
-        verify(catalogShoeRepository).findAll(eq(spec), any(Pageable.class));
+        ArgumentCaptor<Specification<CatalogShoe>> specCaptor = ArgumentCaptor.forClass(Specification.class);
+        verify(catalogShoeRepository, org.mockito.Mockito.times(2))
+                .findAll(specCaptor.capture(), any(Pageable.class));
+        List<Specification<CatalogShoe>> captured = specCaptor.getAllValues();
+        assertThat(captured.get(0)).isSameAs(spec);
+        assertThat(captured.get(1)).isSameAs(spec);
     }
 
     @Test
     void search_skipsLatestDateWhenBrandNotMatchedOrInvalidDwid() {
         // Arrange
         AISearchFilterCriteria criteria = new AISearchFilterCriteria();
-        criteria.setBrands(List.of("Nike"));
         Specification<CatalogShoe> spec = (root, query, cb) -> cb.conjunction();
         Page<CatalogShoe> page = new PageImpl<>(List.of());
         when(specificationBuilder.build(criteria)).thenReturn(spec);
-        CatalogShoeRepository.LatestData otherBrand = new CatalogShoeRepository.LatestData() {
-            @Override
-            public String getBrand() {
-                return "Adidas";
-            }
-
-            @Override
-            public String getLatestDwid() {
-                return "2025-2-2"; // invalid date key length after digits-only
-            }
-        };
-        when(catalogShoeRepository.findLatestDatePerBrand()).thenReturn(List.of(otherBrand));
-        when(catalogShoeRepository.findAll(eq(spec), org.mockito.ArgumentMatchers.any(Pageable.class)))
-                .thenReturn(page);
+        CatalogShoe latest = new CatalogShoe();
+        latest.setId("id-1");
+        latest.setDwid("dwid-1");
+        latest.setYear(null);
+        latest.setMonth(2);
+        latest.setDay(2);
+        when(catalogShoeRepository.findAll(any(Specification.class), org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(latest)), page);
 
         Pageable inputPageable = PageRequest.of(0, 5);
 
@@ -206,8 +181,12 @@ class SearchOrchestratorTest {
         orchestrator.search("query", criteria, inputPageable);
 
         // Assert
-        verify(catalogShoeRepository).findLatestDatePerBrand();
-        verify(catalogShoeRepository).findAll(eq(spec), any(Pageable.class));
+        ArgumentCaptor<Specification<CatalogShoe>> specCaptor = ArgumentCaptor.forClass(Specification.class);
+        verify(catalogShoeRepository, org.mockito.Mockito.times(2))
+                .findAll(specCaptor.capture(), any(Pageable.class));
+        List<Specification<CatalogShoe>> captured = specCaptor.getAllValues();
+        assertThat(captured.get(0)).isSameAs(spec);
+        assertThat(captured.get(1)).isSameAs(spec);
     }
 
     @Test
@@ -220,20 +199,8 @@ class SearchOrchestratorTest {
         shoe.setDwid("dwid-1");
         Page<CatalogShoe> page = new PageImpl<>(List.of(shoe));
         when(specificationBuilder.build(criteria)).thenReturn(spec);
-        CatalogShoeRepository.LatestData latestData = new CatalogShoeRepository.LatestData() {
-            @Override
-            public String getBrand() {
-                return "Nike";
-            }
-
-            @Override
-            public String getLatestDwid() {
-                return "20250220";
-            }
-        };
-        when(catalogShoeRepository.findLatestDatePerBrand()).thenReturn(List.of(latestData));
         when(catalogShoeRepository.findAll(any(Specification.class), org.mockito.ArgumentMatchers.any(Pageable.class)))
-                .thenReturn(page);
+                .thenReturn(new PageImpl<>(List.of(shoe)), page);
 
         Pageable inputPageable = PageRequest.of(0, 5);
 
@@ -241,7 +208,7 @@ class SearchOrchestratorTest {
         orchestrator.search("query", criteria, inputPageable);
 
         // Assert
-        verify(catalogShoeRepository).findLatestDatePerBrand();
-        verify(catalogShoeRepository).findAll(any(Specification.class), any(Pageable.class));
+        verify(catalogShoeRepository, org.mockito.Mockito.times(2))
+                .findAll(any(Specification.class), any(Pageable.class));
     }
 }

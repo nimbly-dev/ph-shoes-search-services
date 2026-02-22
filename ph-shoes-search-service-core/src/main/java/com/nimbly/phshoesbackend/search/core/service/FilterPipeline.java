@@ -62,7 +62,9 @@ public class FilterPipeline {
         Optional.ofNullable(aiCriteria.getPriceSaleMax()).ifPresent(baseCriteria::setPriceSaleMax);
         Optional.ofNullable(aiCriteria.getPriceOriginalMin()).ifPresent(baseCriteria::setPriceOriginalMin);
         Optional.ofNullable(aiCriteria.getPriceOriginalMax()).ifPresent(baseCriteria::setPriceOriginalMax);
-        baseCriteria.setOnSale(aiCriteria.getOnSale());
+        if (Boolean.TRUE.equals(aiCriteria.getOnSale())) {
+            baseCriteria.setOnSale(true);
+        }
 
         if (applyAiSortOverride(baseCriteria, aiCriteria)) {
             return;

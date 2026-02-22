@@ -57,4 +57,67 @@ class FilterPipelineTest {
         assertThat(result.getTitleKeywords()).isNull();
         assertThat(result.getSubtitleKeywords()).isNull();
     }
+
+    @Test
+    void process_preservesOnSaleWhenAiDoesNotProvide() {
+        // Arrange
+        AISearchFilterCriteria base = new AISearchFilterCriteria();
+        base.setOnSale(true);
+
+        AISearchFilterCriteria ai = new AISearchFilterCriteria();
+        ai.setOnSale(null);
+
+        when(preFilterExtractor.extract("query")).thenReturn(base);
+        when(preFilterExtractor.strip("query")).thenReturn("query");
+        when(openAiIntentParserService.parseIntent("query")).thenReturn(ai);
+        doNothing().when(filterValidator).validate(base);
+
+        // Act
+        AISearchFilterCriteria result = filterPipeline.process("query");
+
+        // Assert
+        assertThat(result.getOnSale()).isTrue();
+    }
+
+    @Test
+    void process_doesNotClearOnSaleWhenAiExplicitlyFalse() {
+        // Arrange
+        AISearchFilterCriteria base = new AISearchFilterCriteria();
+        base.setOnSale(true);
+
+        AISearchFilterCriteria ai = new AISearchFilterCriteria();
+        ai.setOnSale(false);
+
+        when(preFilterExtractor.extract("query")).thenReturn(base);
+        when(preFilterExtractor.strip("query")).thenReturn("query");
+        when(openAiIntentParserService.parseIntent("query")).thenReturn(ai);
+        doNothing().when(filterValidator).validate(base);
+
+        // Act
+        AISearchFilterCriteria result = filterPipeline.process("query");
+
+        // Assert
+        assertThat(result.getOnSale()).isTrue();
+    }
+
+    @Test
+    void process_allowsAiToEnableOnSale() {
+        // Arrange
+        AISearchFilterCriteria base = new AISearchFilterCriteria();
+        base.setOnSale(false);
+
+        AISearchFilterCriteria ai = new AISearchFilterCriteria();
+        ai.setOnSale(true);
+
+        when(preFilterExtractor.extract("query")).thenReturn(base);
+        when(preFilterExtractor.strip("query")).thenReturn("query");
+        when(openAiIntentParserService.parseIntent("query")).thenReturn(ai);
+        doNothing().when(filterValidator).validate(base);
+
+        // Act
+        AISearchFilterCriteria result = filterPipeline.process("query");
+
+        // Assert
+        assertThat(result.getOnSale()).isTrue();
+    }
 }

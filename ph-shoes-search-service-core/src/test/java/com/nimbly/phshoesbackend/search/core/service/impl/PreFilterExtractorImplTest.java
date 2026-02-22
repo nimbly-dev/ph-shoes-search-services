@@ -36,4 +36,18 @@ class PreFilterExtractorImplTest {
         // Assert
         assertThat(stripped).isEqualTo("10");
     }
+
+    @Test
+    void extract_supportsOnSalesVariant() {
+        // Arrange
+        String query = "Most expensive Nike shoes on sales";
+
+        // Act
+        AISearchFilterCriteria criteria = extractor.extract(query);
+
+        // Assert
+        assertThat(criteria.getBrands()).containsExactly("nike");
+        assertThat(criteria.getOnSale()).isTrue();
+        assertThat(criteria.getSortBy()).isEqualTo("price_desc");
+    }
 }

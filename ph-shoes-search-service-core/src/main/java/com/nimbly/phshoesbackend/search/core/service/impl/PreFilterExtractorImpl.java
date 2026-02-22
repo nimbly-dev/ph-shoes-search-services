@@ -28,6 +28,7 @@ public class PreFilterExtractorImpl implements PreFilterExtractor {
                     "|\\b(?:us|eu|uk)?\\s*([0-9]+(?:\\.[05])?)\\b",
             Pattern.CASE_INSENSITIVE
     );
+    private static final Pattern ON_SALE = Pattern.compile("\\bon sales?\\b", Pattern.CASE_INSENSITIVE);
 
     @Override
     public AISearchFilterCriteria extract(String q) {
@@ -40,7 +41,7 @@ public class PreFilterExtractorImpl implements PreFilterExtractor {
                 .collect(Collectors.toList());
         if (!found.isEmpty()) c.setBrands(found);
 
-        c.setOnSale(lower.contains("on sale"));
+        c.setOnSale(ON_SALE.matcher(lower).find());
 
         Matcher underMatcher = UNDER.matcher(lower);
         if (underMatcher.find()) c.setPriceSaleMax(Double.valueOf(underMatcher.group(1)));
@@ -101,7 +102,7 @@ public class PreFilterExtractorImpl implements PreFilterExtractor {
             out = out.replaceAll("(?i)\\b" + Pattern.quote(b) + "\\b", "");
         }
         out = out.replaceAll(
-                "(?i)\\b(on sale|under|below|over|above|cheapest|lowest|most expensive|highest price|size|sizes|us|eu|uk)\\b",
+                "(?i)\\b(on sales?|under|below|over|above|cheapest|lowest|most expensive|highest price|size|sizes|us|eu|uk)\\b",
                 ""
         );
         return out.trim().replaceAll("\\s{2,}", " ");
